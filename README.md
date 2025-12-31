@@ -1,169 +1,170 @@
 # p-14653-1-mission
-- 0003 완료
+- 0004 완료
+
+<img width="1505" height="1116" alt="image" src="https://github.com/user-attachments/assets/7fd42dfe-6885-495b-8cc1-7ae1f3e79053" />
 
   
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl run nginx-pod --image=nginx:latest
+$ vi nginx-pod.yaml
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl apply -f nginx-pod.yaml
 pod/nginx-pod created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get pods
-NAME        READY   STATUS    RESTARTS   AGE
-nginx-pod   1/1     Running   0          11s
+$ kubectl apply -f nginx-pod.yaml
+pod/nginx-pod unchanged
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get pods -w
-NAME        READY   STATUS    RESTARTS   AGE
-nginx-pod   1/1     Running   0          16s
-
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl describe pod nginx-pod
-Name:             nginx-pod
-Namespace:        default
-Priority:         0
-Service Account:  default
-Node:             docker-desktop/192.168.65.3
-Start Time:       Wed, 31 Dec 2025 15:33:33 +0900
-Labels:           run=nginx-pod
-Annotations:      <none>
-Status:           Running
-IP:               10.1.0.14
-IPs:
-  IP:  10.1.0.14
-Containers:
-  nginx-pod:
-    Container ID:   docker://834fd264e0b2e85d4a405c7e4505c374fa39d262eed785952bb8a84839f3ac4c
-    Image:          nginx:latest
-    Image ID:       docker-pullable://nginx@sha256:ca871a86d45a3ec6864dc45f014b11fe626145569ef0e74deaffc95a3b15b430
-    Port:           <none>
-    Host Port:      <none>
-    State:          Running
-      Started:      Wed, 31 Dec 2025 15:33:42 +0900
-    Ready:          True
-    Restart Count:  0
-    Environment:    <none>
-    Mounts:
-      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-mgdzp (ro)
-Conditions:
-  Type                        Status
-  PodReadyToStartContainers   True
-  Initialized                 True
-  Ready                       True
-  ContainersReady             True
-  PodScheduled                True
-Volumes:
-  kube-api-access-mgdzp:
-    Type:                    Projected (a volume that contains injected data from multiple sources)
-    TokenExpirationSeconds:  3607
-    ConfigMapName:           kube-root-ca.crt
-    Optional:                false
-    DownwardAPI:             true
-QoS Class:                   BestEffort
-Node-Selectors:              <none>
-Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
-                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
-Events:
-  Type    Reason     Age   From               Message
-  ----    ------     ----  ----               -------
-  Normal  Scheduled  27s   default-scheduler  Successfully assigned default/nginx-pod to docker-desktop
-  Normal  Pulling    27s   kubelet            Pulling image "nginx:latest"
-  Normal  Pulled     19s   kubelet            Successfully pulled image "nginx:latest" in 7.587s (7.587s including waiting). Image size: 59797235 bytes.
-  Normal  Created    19s   kubelet            Created container: nginx-pod
-  Normal  Started    19s   kubelet            Started container nginx-pod
+$ kubectl get pods -o wide
+NAME        READY   STATUS    RESTARTS   AGE   IP          NODE             NOMINATED NODE   READINESS GATES
+nginx-pod   1/1     Running   0          33s   10.1.0.15   docker-desktop   <none>           <none>
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec -it nginx-pod -- bash
-root@nginx-pod:/# cat /etc/nginx/nginx.conf
-
-user  nginx;
-worker_processes  auto;
-
-error_log  /var/log/nginx/error.log notice;
-pid        /run/nginx.pid;
-
-
-events {
-    worker_connections  1024;
-}
-
-
-http {
-    include       /etc/nginx/mime.types;
-    default_type  application/octet-stream;
-
-    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"';
-
-    access_log  /var/log/nginx/access.log  main;
-
-    sendfile        on;
-    #tcp_nopush     on;
-
-    keepalive_timeout  65;
-
-    #gzip  on;
-
-    include /etc/nginx/conf.d/*.conf;
-}
-root@nginx-pod:/# exit
-exit
+$ kubectl get pod nginx-pod -o yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"labels":{"app":"nginx","environment":"dev"},"name":"nginx-pod","namespace":"default"},"spec":{"containers":[{"image":"nginx:1.25","name":"nginx","ports":[{"containerPort":80}],"resources":{"limits":{"cpu":"200m","memory":"128Mi"},"requests":{"cpu":"100m","memory":"64Mi"}}}]}}
+  creationTimestamp: "2025-12-31T07:06:12Z"
+  generation: 1
+  labels:
+    app: nginx
+    environment: dev
+  name: nginx-pod
+  namespace: default
+  resourceVersion: "98773"
+  uid: 7228853b-89fb-4553-abef-4686d4c18c27
+spec:
+  containers:
+  - image: nginx:1.25
+    imagePullPolicy: IfNotPresent
+    name: nginx
+    ports:
+    - containerPort: 80
+      protocol: TCP
+    resources:
+      limits:
+        cpu: 200m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 64Mi
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-4cds4
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: docker-desktop
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: kube-api-access-4cds4
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2025-12-31T07:06:21Z"
+    observedGeneration: 1
+    status: "True"
+    type: PodReadyToStartContainers
+  - lastProbeTime: null
+    lastTransitionTime: "2025-12-31T07:06:12Z"
+    observedGeneration: 1
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2025-12-31T07:06:21Z"
+    observedGeneration: 1
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2025-12-31T07:06:21Z"
+    observedGeneration: 1
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2025-12-31T07:06:12Z"
+    observedGeneration: 1
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - allocatedResources:
+      cpu: 100m
+      memory: 64Mi
+    containerID: docker://5a2d60b20eca6a8105aab486d6440aab2417c947e5048fe270705fc0eeea4ecb
+    image: nginx:1.25
+    imageID: docker-pullable://nginx@sha256:a484819eb60211f5299034ac80f6a681b06f89e65866ce91f356ed7c72af059c
+    lastState: {}
+    name: nginx
+    ready: true
+    resources:
+      limits:
+        cpu: 200m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 64Mi
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2025-12-31T07:06:21Z"
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-4cds4
+      readOnly: true
+      recursiveReadOnly: Disabled
+  hostIP: 192.168.65.3
+  hostIPs:
+  - ip: 192.168.65.3
+  observedGeneration: 1
+  phase: Running
+  podIP: 10.1.0.15
+  podIPs:
+  - ip: 10.1.0.15
+  qosClass: Burstable
+  startTime: "2025-12-31T07:06:12Z"
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl logs nginx-pod
-/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
-/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
-10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
-10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
-/docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
-/docker-entrypoint.sh: Configuration complete; ready for start up
-2025/12/31 06:33:42 [notice] 1#1: using the "epoll" event method
-2025/12/31 06:33:42 [notice] 1#1: nginx/1.29.4
-2025/12/31 06:33:42 [notice] 1#1: built by gcc 14.2.0 (Debian 14.2.0-19)
-2025/12/31 06:33:42 [notice] 1#1: OS: Linux 6.6.87.2-microsoft-standard-WSL2
-2025/12/31 06:33:42 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
-2025/12/31 06:33:42 [notice] 1#1: start worker processes
-2025/12/31 06:33:42 [notice] 1#1: start worker process 29
-2025/12/31 06:33:42 [notice] 1#1: start worker process 30
-2025/12/31 06:33:42 [emerg] 29#29: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 31
-2025/12/31 06:33:42 [emerg] 30#30: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [emerg] 31#31: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 32
-2025/12/31 06:33:42 [notice] 1#1: start worker process 33
-2025/12/31 06:33:42 [emerg] 32#32: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [emerg] 33#33: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 34
-2025/12/31 06:33:42 [emerg] 34#34: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 35
-2025/12/31 06:33:42 [emerg] 35#35: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 36
-2025/12/31 06:33:42 [emerg] 36#36: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 37
-2025/12/31 06:33:42 [emerg] 37#37: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 38
-2025/12/31 06:33:42 [emerg] 38#38: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 39
-2025/12/31 06:33:42 [emerg] 39#39: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 40
-2025/12/31 06:33:42 [notice] 1#1: start worker process 41
-2025/12/31 06:33:42 [emerg] 40#40: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [emerg] 41#41: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 42
-2025/12/31 06:33:42 [notice] 1#1: start worker process 43
-2025/12/31 06:33:42 [emerg] 42#42: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [emerg] 43#43: io_setup() failed (11: Resource temporarily unavailable)
-2025/12/31 06:33:42 [notice] 1#1: start worker process 44
-2025/12/31 06:33:42 [emerg] 44#44: io_setup() failed (11: Resource temporarily unavailable)
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete pod nginx-pod
+$kubectl delete -f nginx-pod.yaml
 pod "nginx-pod" deleted from default namespace
 
-
-
-  
+early@JAKEPARK-MAINPC MINGW64 ~
+$
