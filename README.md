@@ -1,68 +1,110 @@
 # p-14653-1-mission
-- 0013 완료
+- 0014 완료
 
-
-
----early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl create secret generic db-secret \
-  --from-literal=username=admin \
-  --from-literal=password=secretpassword123
-secret/db-secret created
+---
+early@JAKEPARK-MAINPC MINGW64 ~
+$ vi pv-local.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get secret db-secret -o yaml
-apiVersion: v1
-data:
-  password: c2VjcmV0cGFzc3dvcmQxMjM=
-  username: YWRtaW4=
-kind: Secret
-metadata:
-  creationTimestamp: "2026-01-05T03:08:25Z"
-  name: db-secret
-  namespace: default
-  resourceVersion: "654925"
-  uid: 07a3ac40-77c4-467d-a108-e1dfdb79dc71
-type: Opaque
+$ pvc-local.yaml
+bash: pvc-local.yaml: command not found
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get secret db-secret -o jsonpath='{.data.username}' | base64 -d
-admin
-early@JAKEPARK-MAINPC MINGW64 ~
-$ echo -n "admin" | base64
-YWRtaW4=
+$ vi pvc-local.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ echo -n "secretpass123" | base64
-c2VjcmV0cGFzczEyMw==
+$ vi pod-with-pvc.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ vi db-secret.yaml
+$ kubectl apply -f pv-local.yaml
+persistentvolume/local-pv created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ vi pod-with-secret.yaml
+$ 
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec -it app-pod -- bash
-Error from server (NotFound): pods "app-pod" not found
+$ kubectl apply -f pvc-local.yaml
+persistentvolumeclaim/local-pvc created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f pod-with-secret.yaml
-pod/db-app-pod created
+$ kubectl apply -f pod-with-pvc.yaml
+pod/pvc-pod created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec -it db-app-pod -- bash
-root@db-app-pod:/# cat /etc/secrets/username
-cat: /etc/secrets/username: No such file or directory
-root@db-app-pod:/# exit
-exit
+$ kubectl get pv
+NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM               STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+local-pv   1Gi        RWO            Retain           Bound    default/local-pvc   manual         <unset>                          14s
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl get pvc
+NAME        STATUS   VOLUME     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+local-pvc   Bound    local-pv   1Gi        RWO            manual         <unset>                 17s
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec pvc-pod -- sh -c "echo 'Hello K8s' > /usr/share/nginx/html/index.html"
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
+cat: 'C:/Program Files/Git/usr/share/nginx/html/index.html': No such file or directory
+command terminated with exit code 1
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec pvc-pod -- sh -c "echo 'Hello K8s' > /usr/share/nginx/html/index.html"
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec pvc-pod -- sh -c "echo 'Hello K8s' > ./index.html"
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec pvc-pod -- cat ./index.html
+Hello K8s
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl delete pod pvc-pod
+pod "pvc-pod" deleted from default namespace
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl apply -f pod-with-pvc.yaml
+pod/pvc-pod created
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
+cat: 'C:/Program Files/Git/usr/share/nginx/html/index.html': No such file or directory
+command terminated with exit code 1
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec pvc-pod -- ./index.html
+OCI runtime exec failed: exec failed: unable to start container process: exec: "./index.html": stat ./index.html: no such file or directory
 command terminated with exit code 127
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete pod db-app-pod
-pod "db-app-pod" deleted from default namespace
+$ MSYS_NO_PATHCONV=1 kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
+Hello K8s
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete secret db-secret
-secret "db-secret" deleted from default namespace
-$ kubectl delete configmap app-config
-configmap "app-config" deleted from default namespace
+$ MSYS_NO_PATHCONV=1 kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
+Hello K8s
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl delete pod pvc-pod
+pod "pvc-pod" deleted from default namespace
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl apply -f pod-with-pvc.yaml
+pod/pvc-pod created
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ MSYS_NO_PATHCONV=1 kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
+Hello K8s
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl delete pod pvc-pod
+pod "pvc-pod" deleted from default namespace
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl delete pvc local-pvc
+persistentvolumeclaim "local-pvc" deleted from default namespace
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl delete pv local-pv
+persistentvolume "local-pv" deleted
+
