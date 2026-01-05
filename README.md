@@ -1,30 +1,22 @@
 # p-14653-1-mission
-- 0010 완료
+- 0011 완료
 
 ---
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f nginx-deployment.yaml
-deployment.apps/nginx-deployment created
+$ vi nginx-service-lb.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get pods -l app=nginx
-NAME                                READY   STATUS    RESTARTS   AGE
-nginx-deployment-7c9dddfb48-24f7f   1/1     Running   0          9s
-nginx-deployment-7c9dddfb48-462gs   1/1     Running   0          9s
-nginx-deployment-7c9dddfb48-6b9tv   1/1     Running   0          9s
+$ kubectl apply -f nginx-service-lb.yaml
+service/nginx-lb created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f nginx-service-nodeport.yaml
-service/nginx-nodeport created
+$ kubectl get service nginx-lb
+NAME       TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+nginx-lb   LoadBalancer   10.97.51.126   localhost     80:32266/TCP   7s
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get service nginx-nodeport
-NAME             TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
-nginx-nodeport   NodePort   10.96.150.72   <none>        80:30080/TCP   7s
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ curl http://localhost:30080
+$ curl http://localhost
 <!DOCTYPE html>
 <html>
 <head>
@@ -50,8 +42,27 @@ Commercial support is available at
 </html>
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete service nginx-nodeport
-service "nginx-nodeport" deleted from default namespace
+$ kubectl describe service nginx-lb
+Name:                     nginx-lb
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=nginx
+Type:                     LoadBalancer
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.97.51.126
+IPs:                      10.97.51.126
+LoadBalancer Ingress:     localhost
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  32266/TCP
+Endpoints:                10.1.0.54:80,10.1.0.53:80,10.1.0.55:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Internal Traffic Policy:  Cluster
+Events:                   <none>
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$
+$ kubectl delete service nginx-lb
+service "nginx-lb" deleted from default namespace
