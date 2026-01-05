@@ -1,68 +1,90 @@
 # p-14653-1-mission
-- 0011 완료
+- 0012 완료
+
+
 
 ---
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl delete pod app-pod
+pod "app-pod" deleted from default namespace
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ vi nginx-service-lb.yaml
+$ kubectl delete configmap app-config
+configmap "app-config" deleted from default namespace
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f nginx-service-lb.yaml
-service/nginx-lb created
+$ vi app-configmap.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get service nginx-lb
-NAME       TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
-nginx-lb   LoadBalancer   10.97.51.126   localhost     80:32266/TCP   7s
+$ kubectl create configmap app-config \
+  --from-literal=APP_ENV=development \
+  --from-literal=APP_DEBUG=true
+configmap/app-config created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ curl http://localhost
-<!DOCTYPE html>
-<html>
-<head>
-<title>Welcome to nginx!</title>
-<style>
-html { color-scheme: light dark; }
-body { width: 35em; margin: 0 auto;
-font-family: Tahoma, Verdana, Arial, sans-serif; }
-</style>
-</head>
-<body>
-<h1>Welcome to nginx!</h1>
-<p>If you see this page, the nginx web server is successfully installed and
-working. Further configuration is required.</p>
-
-<p>For online documentation and support please refer to
-<a href="http://nginx.org/">nginx.org</a>.<br/>
-Commercial support is available at
-<a href="http://nginx.com/">nginx.com</a>.</p>
-
-<p><em>Thank you for using nginx.</em></p>
-</body>
-</html>
+$ kubectl delete configmap app-config
+configmap "app-config" deleted from default namespace
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl describe service nginx-lb
-Name:                     nginx-lb
-Namespace:                default
-Labels:                   <none>
-Annotations:              <none>
-Selector:                 app=nginx
-Type:                     LoadBalancer
-IP Family Policy:         SingleStack
-IP Families:              IPv4
-IP:                       10.97.51.126
-IPs:                      10.97.51.126
-LoadBalancer Ingress:     localhost
-Port:                     <unset>  80/TCP
-TargetPort:               80/TCP
-NodePort:                 <unset>  32266/TCP
-Endpoints:                10.1.0.54:80,10.1.0.53:80,10.1.0.55:80
-Session Affinity:         None
-External Traffic Policy:  Cluster
-Internal Traffic Policy:  Cluster
-Events:                   <none>
+$ kubectl apply -f pod-with-configmap.yaml
+pod/app-pod created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete service nginx-lb
-service "nginx-lb" deleted from default namespace
+$ kubectl apply -f app-configmap.yaml
+configmap/app-config created
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl apply -f pod-with-configmap.yaml
+pod/app-pod unchanged
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec app-pod -- env | grep APP
+APP_ENV=development
+APP_DEBUG=true
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec -it app-pod -- bash
+root@app-pod:/# development
+bash: development: command not found
+root@app-pod:/# echo $APP_ENV
+development
+root@app-pod:/# echo $DATABASE_HOST
+db-service
+root@app-pod:/# exit
+exit
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl exec app-pod -- env | grep APP
+APP_ENV=development
+APP_DEBUG=true
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl get configmap app-config -o yaml
+apiVersion: v1
+data:
+  APP_DEBUG: "true"
+  APP_ENV: development
+  DATABASE_HOST: db-service
+  DATABASE_PORT: "5432"
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"APP_DEBUG":"true","APP_ENV":"development","DATABASE_HOST":"db-service","DATABASE_PORT":"5432"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"app-config","namespace":"default"}}
+  creationTimestamp: "2026-01-05T03:02:27Z"
+  name: app-config
+  namespace: default
+  resourceVersion: "654435"
+  uid: deba1176-8ea7-4090-aefd-65930e0789bb
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl edit configmap app-config
+Edit cancelled, no changes made.
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl delete pod app-pod
+pod "app-pod" deleted from default namespace
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl delete configmap app-config
+configmap "app-config" deleted from default namespace
