@@ -1,110 +1,74 @@
 # p-14653-1-mission
-- 0014 완료
+- 0015 완료
 
 ---
-early@JAKEPARK-MAINPC MINGW64 ~
-$ vi pv-local.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ pvc-local.yaml
-bash: pvc-local.yaml: command not found
+$ vi namespace.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ vi pvc-local.yaml
+$ vi namespace.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ vi pod-with-pvc.yaml
+$ kubectl apply -f namespace.yaml
+namespace/demo-app created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f pv-local.yaml
-persistentvolume/local-pv created
+$ vi backend-deployment.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ 
+$ vi frontend-deployment.yaml:
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f pvc-local.yaml
-persistentvolumeclaim/local-pvc created
+$ kubectl apply -f namespace.yaml
+namespace/demo-app unchanged
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f pod-with-pvc.yaml
-pod/pvc-pod created
+$ kubectl apply -f backend-deployment.yaml
+deployment.apps/backend created
+service/backend-service created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get pv
-NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM               STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-local-pv   1Gi        RWO            Retain           Bound    default/local-pvc   manual         <unset>                          14s
+$ kubectl apply -f frontend-deployment.yaml
+error: the path "frontend-deployment.yaml" does not exist
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get pvc
-NAME        STATUS   VOLUME     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-local-pvc   Bound    local-pv   1Gi        RWO            manual         <unset>                 17s
+$ vi frontend-deployment.yaml
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec pvc-pod -- sh -c "echo 'Hello K8s' > /usr/share/nginx/html/index.html"
+$ rm frontend-deployment.yaml:
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
-cat: 'C:/Program Files/Git/usr/share/nginx/html/index.html': No such file or directory
-command terminated with exit code 1
+$ kubectl apply -f frontend-deployment.yaml
+deployment.apps/frontend created
+service/frontend-service created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec pvc-pod -- sh -c "echo 'Hello K8s' > /usr/share/nginx/html/index.html"
+$ kubectl get all -n demo-app
+NAME                            READY   STATUS    RESTARTS   AGE
+pod/backend-746f6d7d4d-hn5t6    1/1     Running   0          45s
+pod/backend-746f6d7d4d-t4mdg    1/1     Running   0          45s
+pod/frontend-7d84cb49b6-7pd8p   1/1     Running   0          7s
+pod/frontend-7d84cb49b6-zf6qk   1/1     Running   0          7s
+
+NAME                       TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/backend-service    ClusterIP      10.96.92.197     <none>        8080/TCP       45s
+service/frontend-service   LoadBalancer   10.102.174.249   localhost     80:31341/TCP   7s
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/backend    2/2     2            2           45s
+deployment.apps/frontend   2/2     2            2           8s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/backend-746f6d7d4d    2         2         2       45s
+replicaset.apps/frontend-7d84cb49b6   2         2         2       7s
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec pvc-pod -- sh -c "echo 'Hello K8s' > ./index.html"
+$ kubectl exec -n demo-app -it \
+  $(kubectl get pod -n demo-app -l app=frontend -o jsonpath='{.items[0].metadata.name}') \
+  -- curl backend-service:8080
+Hello from Backend!
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec pvc-pod -- cat ./index.html
-Hello K8s
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete pod pvc-pod
-pod "pvc-pod" deleted from default namespace
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f pod-with-pvc.yaml
-pod/pvc-pod created
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
-cat: 'C:/Program Files/Git/usr/share/nginx/html/index.html': No such file or directory
-command terminated with exit code 1
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl exec pvc-pod -- ./index.html
-OCI runtime exec failed: exec failed: unable to start container process: exec: "./index.html": stat ./index.html: no such file or directory
-command terminated with exit code 127
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ MSYS_NO_PATHCONV=1 kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
-Hello K8s
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ MSYS_NO_PATHCONV=1 kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
-Hello K8s
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete pod pvc-pod
-pod "pvc-pod" deleted from default namespace
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f pod-with-pvc.yaml
-pod/pvc-pod created
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ MSYS_NO_PATHCONV=1 kubectl exec pvc-pod -- cat /usr/share/nginx/html/index.html
-Hello K8s
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete pod pvc-pod
-pod "pvc-pod" deleted from default namespace
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete pvc local-pvc
-persistentvolumeclaim "local-pvc" deleted from default namespace
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl delete pv local-pv
-persistentvolume "local-pv" deleted
-
+$ kubectl delete namespace demo-app
+namespace "demo-app" deleted
