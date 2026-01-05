@@ -1,70 +1,30 @@
 # p-14653-1-mission
-- 0009 완료
+- 0010 완료
 
 ---
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f nginx-deployment.yaml
-Error from server (BadRequest): error when creating "nginx-deployment.yaml": Deployment in version "v1" cannot be handled as a Deployment: strict decoding error: unknown field "spec.template.spec.rollingUpdate", unknown field "spec.template.spec.type"
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ vi nginx-deployment.yaml
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ rm nginx-deployment.yaml
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ vi nginx-deployment.yaml
-
-[No write since last change]
-
-Press ENTER or type command to continue
 
 early@JAKEPARK-MAINPC MINGW64 ~
 $ kubectl apply -f nginx-deployment.yaml
 deployment.apps/nginx-deployment created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ vi nginx-service-clusterip.yaml:
-
-early@JAKEPARK-MAINPC MINGW64 ~
 $ kubectl get pods -l app=nginx
 NAME                                READY   STATUS    RESTARTS   AGE
-nginx-deployment-7c9dddfb48-2tf5k   1/1     Running   0          106s
-nginx-deployment-7c9dddfb48-rwj64   1/1     Running   0          106s
-nginx-deployment-7c9dddfb48-zfvnq   1/1     Running   0          106s
+nginx-deployment-7c9dddfb48-24f7f   1/1     Running   0          9s
+nginx-deployment-7c9dddfb48-462gs   1/1     Running   0          9s
+nginx-deployment-7c9dddfb48-6b9tv   1/1     Running   0          9s
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl apply -f nginx-service-clusterip.yaml
-service/nginx-service unchanged
+$ kubectl apply -f nginx-service-nodeport.yaml
+service/nginx-nodeport created
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl get services
-NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
-kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP   5d17h
-nginx-service   ClusterIP   10.102.131.68   <none>        80/TCP    9m42s
+$ kubectl get service nginx-nodeport
+NAME             TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+nginx-nodeport   NodePort   10.96.150.72   <none>        80:30080/TCP   7s
 
 early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl describe service nginx-service
-Name:                     nginx-service
-Namespace:                default
-Labels:                   <none>
-Annotations:              <none>
-Selector:                 app=nginx
-Type:                     ClusterIP
-IP Family Policy:         SingleStack
-IP Families:              IPv4
-IP:                       10.102.131.68
-IPs:                      10.102.131.68
-Port:                     <unset>  80/TCP
-TargetPort:               80/TCP
-Endpoints:                10.1.0.47:80,10.1.0.46:80,10.1.0.48:80
-Session Affinity:         None
-Internal Traffic Policy:  Cluster
-Events:                   <none>
-
-early@JAKEPARK-MAINPC MINGW64 ~
-$ kubectl run curl-test --image=curlimages/curl -it --rm --restart=Never -- curl nginx-service
+$ curl http://localhost:30080
 <!DOCTYPE html>
 <html>
 <head>
@@ -88,4 +48,10 @@ Commercial support is available at
 <p><em>Thank you for using nginx.</em></p>
 </body>
 </html>
-pod "curl-test" deleted from default namespace
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$ kubectl delete service nginx-nodeport
+service "nginx-nodeport" deleted from default namespace
+
+early@JAKEPARK-MAINPC MINGW64 ~
+$
